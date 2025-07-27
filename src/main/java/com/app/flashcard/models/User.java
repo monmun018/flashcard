@@ -2,7 +2,7 @@ package com.app.flashcard.models;
 
 import com.app.flashcard.forms.RegistForm;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "user")

@@ -1,6 +1,6 @@
 package com.app.flashcard.forms;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 public class DeckForm {
     @NotEmpty(message = "Hãy điền tên bộ thẻ!")

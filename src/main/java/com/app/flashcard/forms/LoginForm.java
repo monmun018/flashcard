@@ -1,7 +1,7 @@
 package com.app.flashcard.forms;
 
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 public class LoginForm {
     @NotEmpty(message = "Tài khoản không hợp lệ")

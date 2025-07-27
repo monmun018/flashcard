@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background">
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+    <form th:action="@{/loginHandler}" th:object="${loginFrom}" method="post">
+        <h3>Login</h3>
+        <label for="loginID">Username</label>
+        <input type="text" th:field="*{loginID}" placeholder="Username" size="20"/>
+        <div th:if="${#fields.hasErrors('loginID')}" th:errors="*{loginID}"></div>
+        <label for="pw">Password</label>
+        <input type="password" th:field="*{pw}" placeholder="Password" size="20"/>
+        <div th:if="${#fields.hasErrors('pw')}" th:errors="*{pw}"></div>
+        <button type="submit">Log In</button>
+        <div class="social">
+          <a href=""><div class="go"><i class="fab fa-google"></i>  Google</div></a>
+          <a th:href="@{/register}"><div class="dk"> Đăng ký</div></a>
+        </div>
+    </form>
+</body>
+</html> 
