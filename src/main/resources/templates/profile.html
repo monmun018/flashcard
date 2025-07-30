@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông tin cá nhân</title>
+    <link rel="stylesheet" th:href="@{/css/nav.css}">
+    <link rel="stylesheet" th:href="@{/css/form.css}">
+    <style>
+        input[type=password] {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .center{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div th:replace="~{fragments/navigation :: nav}"></div>
+    
+    <form th:action="@{/profile}" th:object="${registFrom}" method="POST">
+        <h3 class="center">Thông tin cá nhân</h3>
+        <p th:text="${mess}" th:if="${mess}"></p>
+        
+        <label for="loginID">Tên đăng nhập</label>
+        <input type="text" placeholder="Tên đăng nhập" th:field="*{loginID}" size="10" readonly="readonly" id="loginID"/>
+        
+        <label for="pw">Mật khẩu</label>
+        <input type="password" placeholder="Mật khẩu" th:field="*{pw}" size="20" id="pw"/>
+        
+        <label for="name">Tên</label>
+        <input type="text" placeholder="Tên" th:field="*{name}" size="20" id="name"/>
+        
+        <label for="age">Tuổi</label>
+        <input type="text" placeholder="Tuổi" th:field="*{age}" size="20" id="age"/>
+        
+        <label for="mail">E-mail</label>
+        <input type="text" placeholder="mail" th:field="*{mail}" size="30" id="mail"/>
+        
+        <button type="submit">Thay đổi</button>
+    </form>
+</body>
+</html>

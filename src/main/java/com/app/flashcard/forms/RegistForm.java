@@ -1,6 +1,6 @@
 package com.app.flashcard.forms;
 
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 
 public class RegistForm {
     private String loginID;

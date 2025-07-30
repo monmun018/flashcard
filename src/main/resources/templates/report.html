@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo học tập</title>
+    <link rel="stylesheet" th:href="@{/css/nav.css}">
+    <link rel="stylesheet" th:href="@{/css/report.css}">
+</head>
+<body>
+    <!-- Navigation -->
+    <div th:replace="~{fragments/navigation :: nav}"></div>
+    
+    <div class="reprot-box">
+        <p th:text="'Tổng số thẻ: ' + ${total}">Tổng số thẻ: 0</p>
+        <p th:text="'Tổng số thẻ chưa thuộc: ' + ${newCard}">Tổng số thẻ chưa thuộc: 0</p>
+        <p th:text="'Tổng số thẻ đang học: ' + ${learning}">Tổng số thẻ đang học: 0</p>
+        <p th:text="'Tổng số thẻ đã thuộc: ' + ${dueCard}">Tổng số thẻ đã thuộc: 0</p>
+        
+        <div> <!-- Biểu đồ -->
+            
+        </div>
+    </div>
+</body>
+</html>

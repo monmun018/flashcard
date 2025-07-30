@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách bộ thẻ</title>
+    <link rel="stylesheet" th:href="@{/css/nav.css}">
+    <link rel="stylesheet" th:href="@{/css/table.css}">
+</head>
+<body>
+    <!-- Navigation -->
+    <div th:replace="~{fragments/navigation :: nav}"></div>
+    
+    <table>
+        <caption>Trang chủ</caption>
+        <thead>
+            <tr>
+                <th scope="col">Tên bộ thẻ</th>
+                <th scope="col">Chưa thuộc</th>
+                <th scope="col">Đang học</th>
+                <th scope="col">Đã thuộc</th>
+                <th scope="col">Tổng số thẻ</th>
+                <th scope="col">Thao tác</th>
+            </tr>
+        </thead>
+        <tfoot>
+            <tr>
+                <td colspan="3" th:text="'Bộ thẻ của ' + ${userName} + '.'">Bộ thẻ của user.</td>
+            </tr>
+        </tfoot>
+        <tbody>
+            <tr th:each="deck : ${decks}">
+                <th scope="row">
+                    <a th:href="@{/deck/{deckId}(deckId=${deck.deckID})}" th:text="${deck.deckName}">Deck Name</a>
+                </th>
+                <td th:text="${deck.newCardNum}">0</td>
+                <td th:text="${deck.learningCardNum}">0</td>
+                <td th:text="${deck.dueCardNum}">0</td>
+                <td th:text="${deck.newCardNum + deck.learningCardNum + deck.dueCardNum}">0</td>
+                <td>
+                    <a th:href="@{/deleteDeck/{deckId}(deckId=${deck.deckID})}">Xóa</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
