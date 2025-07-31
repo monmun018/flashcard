@@ -52,3 +52,10 @@ This is a Spring Boot 3.4.4 web application using Java 21 with a traditional MVC
 - All business logic is centralized in `HomeController.java`
 - Database schema is recreated on each startup (development mode)
 - Duplicate static resources exist in both webapp/ and resources/ directories
+
+## Development Environment
+- **Java version**: 21 (required)
+- **Spring Boot version**: 3.4.4
+- **Build tool**: Gradle with wrapper
+- **Database**: MySQL 8.0 (via Docker) #todo change to postgreSQL
+- **Template engines**: Both JSP and Thymeleaf (transitional state) #todo remove JSP
