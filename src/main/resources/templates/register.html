@@ -13,7 +13,7 @@
         <div class="shape"></div>
         <div class="shape"></div>
     </div>
-    <form th:action="@{/register}" th:object="${registFrom}" method="POST">
+    <form th:action="@{/register}" th:object="${userRegistrationDTO}" method="POST">
         <h3>Register</h3>
         <p th:text="${mess}" th:if="${mess}"></p>
         
@@ -21,7 +21,7 @@
         <input type="text" placeholder="Username" th:field="*{loginID}" size="10" id="loginID"/>
         
         <label for="pw">Password</label>
-        <input type="password" placeholder="Password" th:field="*{pw}" size="20" id="pw"/>
+        <input type="password" placeholder="Password" th:field="*{password}" size="20" id="pw"/>
         
         <label for="name">Tên</label>
         <input type="text" placeholder="Tên" th:field="*{name}" size="20" id="name"/>
@@ -30,7 +30,7 @@
         <input type="text" placeholder="Tuổi" th:field="*{age}" size="20" id="age"/>
         
         <label for="mail">E-mail</label>
-        <input type="text" placeholder="mail" th:field="*{mail}" size="30" id="mail"/>
+        <input type="text" placeholder="mail" th:field="*{email}" size="30" id="mail"/>
         
         <button type="submit">Đăng ký</button>
         <div class="social">

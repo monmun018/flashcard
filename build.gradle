@@ -25,6 +25,23 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     implementation 'org.hibernate:hibernate-validator:8.0.1.Final'
+    
+    // Phase 1: Foundation Setup Dependencies
+    // Security Framework
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    
+    // Validation Framework (spring-boot-starter-validation includes hibernate-validator)
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    
+    // Testing Support for Security
+    testImplementation 'org.springframework.security:spring-security-test'
+    
+    // Optional: DTO Mapping (for future phases)
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+    
+    // Phase 3: Thymeleaf Spring Security integration
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 }
 
 test {

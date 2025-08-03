@@ -1,5 +1,9 @@
 HELP.md
 
+### plan ###
+plan
+.plan/
+
 ### Gradle ###
 .gradle/*
 build/
