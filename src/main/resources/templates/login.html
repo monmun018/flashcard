@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <title>Login</title>
     <link rel="stylesheet" th:href="@{/css/login.css}">
@@ -12,14 +13,33 @@
         <div class="shape"></div>
         <div class="shape"></div>
     </div>
-    <form th:action="@{/loginHandler}" th:object="${loginFrom}" method="post">
+    <form th:action="@{/login}" method="post">
         <h3>Login</h3>
+        
+        <!-- Show error message if login failed -->
+        <div th:if="${param.error}" class="error" style="color: red; margin-bottom: 10px;">
+            Invalid username or password.
+        </div>
+        
+        <!-- Show success message if logout -->
+        <div th:if="${param.logout}" class="message" style="color: green; margin-bottom: 10px;">
+            You have been logged out.
+        </div>
+        
+        <!-- Show error from session if any -->
+        <div th:if="${session.error}" class="error" style="color: red; margin-bottom: 10px;">
+            <span th:text="${session.error}">Error message</span>
+        </div>
+        
         <label for="loginID">Username</label>
-        <input type="text" th:field="*{loginID}" placeholder="Username" size="20"/>
-        <div th:if="${#fields.hasErrors('loginID')}" th:errors="*{loginID}"></div>
+        <input type="text" name="loginID" placeholder="Username" size="20" required/>
+        
         <label for="pw">Password</label>
-        <input type="password" th:field="*{pw}" placeholder="Password" size="20"/>
-        <div th:if="${#fields.hasErrors('pw')}" th:errors="*{pw}"></div>
+        <input type="password" name="pw" placeholder="Password" size="20" required/>
+        
+        <!-- CSRF token for security (when CSRF is enabled) -->
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" th:if="${_csrf}"/>
+        
         <button type="submit">Log In</button>
         <div class="social">
           <a href=""><div class="go"><i class="fab fa-google"></i>  Google</div></a>

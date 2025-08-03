@@ -12,7 +12,7 @@
     <!-- Navigation -->
     <div th:replace="~{fragments/navigation :: nav}"></div>
     
-    <form th:action="@{/addCard}" th:object="${cardForm}" method="POST">
+    <form th:action="@{/addCard}" th:object="${cardCreationDTO}" method="POST">
         <label for="deckID">Chọn bộ thẻ</label>
         <select th:field="*{deckID}" id="deckID">
             <option th:each="option : ${listOption}" 

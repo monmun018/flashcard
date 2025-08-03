@@ -1,17 +1,26 @@
 package com.app.flashcard.controllers;
 
-import com.app.flashcard.forms.CardForm;
-import com.app.flashcard.forms.DeckForm;
-import com.app.flashcard.forms.LoginForm;
-import com.app.flashcard.forms.RegistForm;
-import com.app.flashcard.models.Card;
-import com.app.flashcard.models.Deck;
-import com.app.flashcard.models.LearningLog;
-import com.app.flashcard.models.User;
-import com.app.flashcard.repositories.CardRepository;
-import com.app.flashcard.repositories.DeckRepository;
-import com.app.flashcard.repositories.LearningLogRepository;
-import com.app.flashcard.repositories.UserRepository;
+import com.app.flashcard.card.form.CardForm;
+import com.app.flashcard.deck.form.DeckForm;
+import com.app.flashcard.user.form.LoginForm;
+import com.app.flashcard.user.form.RegistForm;
+import com.app.flashcard.card.model.Card;
+import com.app.flashcard.deck.model.Deck;
+import com.app.flashcard.learning.model.LearningLog;
+import com.app.flashcard.user.model.User;
+import com.app.flashcard.card.repository.CardRepository;
+import com.app.flashcard.deck.repository.DeckRepository;
+import com.app.flashcard.learning.repository.LearningLogRepository;
+import com.app.flashcard.user.repository.UserRepository;
+import com.app.flashcard.user.service.UserService;
+import com.app.flashcard.deck.service.DeckService;
+import com.app.flashcard.card.service.CardService;
+import com.app.flashcard.learning.service.LearningService;
+import com.app.flashcard.shared.security.UserPrincipal;
+import com.app.flashcard.shared.exception.EntityNotFoundException;
+import com.app.flashcard.shared.exception.ValidationException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -19,6 +28,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpSession;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,12 +36,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Controller
-@RequestMapping(path = "")
-@SessionAttributes("Ses")
+//@Controller // Temporarily disabled to avoid mapping conflicts
+//@RequestMapping(path = "")
 // http:localhost:8080/
 public class HomeController {
-    @Autowired //Inject UserRepository
+    @Autowired //Inject UserRepository (will be removed in later steps)
     private UserRepository userRepository;
     @Autowired
     private CardRepository cardRepository;
@@ -42,40 +51,44 @@ public class HomeController {
     @Autowired
     private LearningLogRepository learningLogRepository;
 
-    @ModelAttribute("Ses")
-    public Session getLoginSession(){
-        return new Session();
-    }
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private DeckService deckService;
+
+    @Autowired
+    private CardService cardService;
+
+    @Autowired
+    private LearningService learningService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     // http:localhost:8080/flashcard
     @RequestMapping(value = "/flashcard", method = RequestMethod.GET)
     public String getHomePage(ModelMap modelMap){
-        List<Card> list = cardRepository.findByFontContent("Hi");
-        Card card = list.iterator().next();
-        modelMap.addAttribute("font",card.getFontContent());
-        modelMap.addAttribute("back",card.getBackContent());
+        Card card = cardService.findByFontContent("Hi");
+        if (card != null) {
+            modelMap.addAttribute("font",card.getFontContent());
+            modelMap.addAttribute("back",card.getBackContent());
+        } else {
+            modelMap.addAttribute("font","Demo card");
+            modelMap.addAttribute("back","Demo card back");
+        }
         return "flashcard";
     }
     // http:localhost:8080/deckList
     @RequestMapping(value = "/home", method = RequestMethod.GET)
-    public String getAllDesk(@ModelAttribute("Ses") Session session,ModelMap modelMap){
-        if (session.isLogin()){
-            List<Deck> decks = deckRepository.findByUserID(session.getUser().getUserID());
-            for (Deck d : decks){
-                int deckID = d.getDeckID();
-                int newCardNum = cardRepository.countNewCardNum(deckID);
-                int learningCardNum = cardRepository.countLearningCardNum(deckID);
-                int dueCardNum = cardRepository.countDueCardNum(deckID);
-                d.setNewCardNum(newCardNum);
-                d.setLearningCardNum(learningCardNum);
-                d.setDueCardNum(dueCardNum);
-            }
-            deckRepository.saveAll(decks);
-            modelMap.addAttribute("decks",decks);
-            modelMap.addAttribute("userName",session.getUser().getUserName());
+    public String getAllDesk(@AuthenticationPrincipal UserPrincipal userPrincipal, ModelMap modelMap){
+        if (userPrincipal != null) {
+            List<Deck> decks = deckService.getDecksByUserWithStatistics(userPrincipal.getUserId());
+            modelMap.addAttribute("decks", decks);
+            modelMap.addAttribute("userName", userPrincipal.getDisplayName());
             return "home";
         }
-        return "redirect:./login";
+        return "redirect:/login";
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.GET)
@@ -85,16 +98,15 @@ public class HomeController {
     }
 
     @RequestMapping(value = "/deck/{deckID}", method = RequestMethod.GET)
-    public String showCard(ModelMap modelMap,@PathVariable int deckID,
-                           @ModelAttribute("Ses") Session session){
-        Iterator<Card> cards = cardRepository.findByDeckIDOrderByRemindTimeAsc(deckID).iterator();
-        if (cards.hasNext()){
-            Card card = cards.next();
+    public String showCard(ModelMap modelMap, @PathVariable int deckID,
+                           HttpSession httpSession){
+        Card card = cardService.getNextCardForDeck(deckID);
+        if (card != null){
             modelMap.addAttribute("font",card.getFontContent());
             modelMap.addAttribute("back",card.getBackContent());
-            // save ID to session
-            session.setCardID(card.getCardID());
-            session.setDeckID(deckID);
+            // save ID to HTTP session
+            httpSession.setAttribute("cardID", card.getCardID());
+            httpSession.setAttribute("deckID", deckID);
             return "flashcard";
         }
         modelMap.addAttribute("font","Không có thẻ");
@@ -104,71 +116,37 @@ public class HomeController {
 
     @RequestMapping(value = "/answer/{ans}", method = RequestMethod.POST)
     public String answerHandler(ModelMap modelMap, @PathVariable int ans,
-                                @ModelAttribute("Ses") Session session){
+                                @AuthenticationPrincipal UserPrincipal userPrincipal,
+                                HttpSession httpSession){
+        if (userPrincipal == null) {
+            return "redirect:/login";
+        }
+        
         //Get session info
-        int userID = session.getUser().getUserID();
-        int cardID = session.getCardID();
-        int deckID = session.getDeckID();
+        int userID = userPrincipal.getUserId();
+        Integer cardID = (Integer) httpSession.getAttribute("cardID");
+        Integer deckID = (Integer) httpSession.getAttribute("deckID");
+        
+        if (cardID == null || deckID == null) {
+            return "redirect:/home";
+        }
 
         // No card handler
-        if (cardRepository.countCardByDeckID(deckID) == 0){
+        if (!cardService.hasDeckAnyCards(deckID)){
             return "redirect:../deck/"+deckID;
         }
 
-        //Card handler->Update Status
-        Card card = cardRepository.findById(cardID).get();
-        int statusTemp = ans == 1 ? 0 : card.getStatus()+ans;
-        card.setStatus(statusTemp);
-
-        //Card handler->Update remind time
-        if (ans == 1 && card.getRemindTime().isAfter(LocalDate.now())){
-            card.setRemindTime(LocalDate.now());
-        }
-        card.setRemindTime(card.getRemindTime().plusDays(statusTemp));
-        cardRepository.save(card);
-
-        //Log Handler
-        //Log Handler --> Learning during the day
-        //                else --> new Log
-        Iterator<LearningLog> logs = learningLogRepository
-                .findByDeckIDAndUserIDAndLogTime(deckID,userID,LocalDate.now())
-                .iterator();
-        LearningLog log;
-        if(logs.hasNext()){
-            log = logs.next();
-            log.increaseLearnTime();
-        } else{
-            log = new LearningLog();
-            //logID auto gen
-            log.setDeckID(deckID);
-            log.setUserID(userID);
-        }
-        learningLogRepository.save(log);
+        // Process the answer using LearningService
+        learningService.processAnswer(cardID, ans, userID, deckID);
+        
         return "redirect:../deck/"+deckID;
     }
 
-    @RequestMapping(value = "/loginHandler", method = RequestMethod.POST)
-    public String loginHandler(@Validated @ModelAttribute("loginFrom") LoginForm form,
-                               BindingResult result,
-                               @ModelAttribute("Ses") Session session,
-                               ModelMap modelMap) {
-        if (result.hasErrors()){
-            return "login";
-        }
-        String id = form.getLoginID();
-        String pw = form.getPw();
-        User user = userRepository.findByUserLoginID(id).iterator().next();
-        if(user.getUserPW().equals(pw)) {
-            session.setUser(user);
-            session.setLogin(true);
-            return "redirect:./home";
-        }
-        return "login";
-    }
+    // Spring Security handles authentication automatically
+    // No need for custom login handler
 
     @RequestMapping(value = "/register", method = RequestMethod.GET)
-    public String getRegisterPage(@ModelAttribute("Ses") Session session,
-                                  ModelMap modelMap){
+    public String getRegisterPage(ModelMap modelMap){
         modelMap.addAttribute("registFrom",new RegistForm());
         return "register";
     }
@@ -176,31 +154,24 @@ public class HomeController {
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public String RegisterHandler(@Validated @ModelAttribute("registFrom") RegistForm form,
                                   BindingResult result,
-                                  @ModelAttribute("Ses") Session session,
                                   ModelMap modelMap){
         if (result.hasErrors()){
             return "register";
         }
+        
         try {
-            //Xử lý trùng tài khoản
-            if(userRepository.findByUserLoginID(form.getLoginID()).iterator().hasNext()){
-                modelMap.addAttribute("mess","Tài khoản đã tồn tại.");
-                return "register";
-            }
-            // Tạo user và lưu lại <Now task>
-            User user = new User().setByRegistForm(form);
-            userRepository.save(user);
-        } catch (Exception e){
-            modelMap.addAttribute("mess","Đăng ký bị lỗi!");
-            return "redirect:./register";
+            // Use new method with hashed password, pass passwordEncoder to avoid circular dependency
+            User user = userService.createUserWithHashedPassword(form, passwordEncoder);
+            modelMap.addAttribute("mess","Đăng ký thành công!");
+            return "redirect:/login";
+        } catch (ValidationException e) {
+            modelMap.addAttribute("mess", e.getMessage());
+            return "register";
         }
-        modelMap.addAttribute("mess","Đăng ký thành công!");
-        return "redirect:./login";
     }
 
     @RequestMapping(value = "/addDeck", method = RequestMethod.GET)
-    public String addDeckForm(@ModelAttribute("Ses") Session session,
-                              ModelMap modelMap){
+    public String addDeckForm(ModelMap modelMap){
         modelMap.addAttribute("deckForm",new DeckForm());
         return "addDeck";
     }
@@ -208,78 +179,63 @@ public class HomeController {
     @RequestMapping(value = "/addDeck", method = RequestMethod.POST)
     public String addDeckHandler(@Validated @ModelAttribute("deckForm") DeckForm form,
                                  BindingResult result,
-                                 @ModelAttribute("Ses") Session session,
-                              ModelMap modelMap){
+                                 @AuthenticationPrincipal UserPrincipal userPrincipal,
+                                 ModelMap modelMap){
         if (result.hasErrors()){
             return "addDeck";
         }
-        String name = form.getDeckName();
-        int userID = session.getUser().getUserID();
-        Deck newDeck = new Deck();
-        newDeck.setDeckName(name);
-        newDeck.setUserID(userID);
-        deckRepository.save(newDeck);
-        return "redirect:./home";
+        
+        if (userPrincipal == null) {
+            return "redirect:/login";
+        }
+        
+        deckService.createDeck(form, userPrincipal.getUserId());
+        return "redirect:/home";
     }
 
-    @RequestMapping(value = "/logout", method = RequestMethod.GET)
-    public String logoutHandler(@ModelAttribute("Ses") Session session,
-                                ModelMap modelMap){
-        session.setLogin(false);
-        session.setUser(null);
-        session.setCardID(-1);
-        session.setDeckID(-1);
-        return "redirect:./login";
-    }
+    // Spring Security handles logout automatically
+    // No need for custom logout handler
 
     @RequestMapping(value = "/addCard", method = RequestMethod.GET)
-    public String addCardForm(@ModelAttribute("Ses") Session session,
+    public String addCardForm(@AuthenticationPrincipal UserPrincipal userPrincipal,
                               ModelMap modelMap){
+        if (userPrincipal == null) {
+            return "redirect:/login";
+        }
+        
         modelMap.addAttribute("cardForm",new CardForm());
-        List<Deck> decks = deckRepository.findByUserID(session.getUser().getUserID());
-        Map<Integer,String> map = decks.stream().collect(Collectors.toMap(Deck::getDeckID,Deck::getDeckName));
-        modelMap.addAttribute("listOption",map);
+        Map<Integer,String> deckOptions = deckService.getDeckOptionsForUser(userPrincipal.getUserId());
+        modelMap.addAttribute("listOption",deckOptions);
         return "addCard";
     }
 
     @RequestMapping(value = "/addCard", method = RequestMethod.POST)
     public String addCardHandler(@Validated @ModelAttribute("deckCard") CardForm form,
                                  BindingResult result,
-                                 @ModelAttribute("Ses") Session session,
                                  ModelMap modelMap){
         if (result.hasErrors()){
             return "addCard";
         }
-        int deskID = (int) form.getDeckID();
-        String fontContent = form.getFontContent();
-        String backContent = form.getBackContent();
-        Card newCard = new Card();
-        newCard.setStatus(0);
-        newCard.setDeckID(deskID);
-        newCard.setFontContent(fontContent);
-        newCard.setBackContent(backContent);
-        cardRepository.save(newCard);
-        return "redirect:./home";
+        
+        cardService.createCard(form);
+        return "redirect:/home";
     }
 
     @RequestMapping(value = "/deleteDeck/{deckID}", method = RequestMethod.GET)
     public String deleteDeck(@PathVariable int deckID){
-        List<Card> cards = cardRepository.findByDeckIDOrderByRemindTimeAsc(deckID);
-        cardRepository.deleteAll(cards);
-        deckRepository.deleteById(deckID);
+        deckService.deleteDeck(deckID);
         return "redirect:../home";
     }
 
     @RequestMapping(value = "/profile", method = RequestMethod.GET)
-    public String profile(@ModelAttribute("Ses") Session session,
+    public String profile(@AuthenticationPrincipal UserPrincipal userPrincipal,
                           ModelMap modelMap) {
-        User user = session.getUser();
-        RegistForm form = new RegistForm();
-        form.setLoginID(user.getUserLoginID());
-        form.setPw(user.getUserPW());
-        form.setName(user.getUserName());
-        form.setAge(user.getUserAge());
-        form.setMail(user.getUserMail());
+        if (userPrincipal == null) {
+            return "redirect:/login";
+        }
+        
+        User user = userPrincipal.getUser();
+        RegistForm form = userService.createRegistFormFromUser(user);
         modelMap.addAttribute("registFrom",form);
         return "profile";
     }
@@ -287,20 +243,24 @@ public class HomeController {
     @RequestMapping(value = "/profile", method = RequestMethod.POST)
     public String profileHandler(@Validated @ModelAttribute("registFrom") RegistForm form,
                                  BindingResult result,
-                                 @ModelAttribute("Ses") Session session,
+                                 @AuthenticationPrincipal UserPrincipal userPrincipal,
                                  ModelMap modelMap) {
         if (result.hasErrors()){
             modelMap.addAttribute("mess","Thay đổi thất bại!");
             return "profile";
         }
-        User user = userRepository.findById(session.getUser().getUserID()).get();
-        user.setUserPW(form.getPw());
-        user.setUserName(form.getName());
-        user.setUserAge(form.getAge());
-        user.setUserMail(form.getMail());
-        userRepository.save(user);
-        session.setUser(user);
-        modelMap.addAttribute("mess","Thay đổi thành công!");
-        return "profile";
+        
+        if (userPrincipal == null) {
+            return "redirect:/login";
+        }
+        
+        try {
+            User updatedUser = userService.updateProfile(userPrincipal.getUserId(), form);
+            modelMap.addAttribute("mess","Thay đổi thành công!");
+            return "profile";
+        } catch (EntityNotFoundException e) {
+            modelMap.addAttribute("mess","Thay đổi thất bại!");
+            return "profile";
+        }
     }
 }

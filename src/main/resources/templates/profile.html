@@ -26,7 +26,7 @@
     <!-- Navigation -->
     <div th:replace="~{fragments/navigation :: nav}"></div>
     
-    <form th:action="@{/profile}" th:object="${registFrom}" method="POST">
+    <form th:action="@{/profile}" th:object="${userProfileDTO}" method="POST">
         <h3 class="center">Thông tin cá nhân</h3>
         <p th:text="${mess}" th:if="${mess}"></p>
         
@@ -34,7 +34,7 @@
         <input type="text" placeholder="Tên đăng nhập" th:field="*{loginID}" size="10" readonly="readonly" id="loginID"/>
         
         <label for="pw">Mật khẩu</label>
-        <input type="password" placeholder="Mật khẩu" th:field="*{pw}" size="20" id="pw"/>
+        <input type="password" placeholder="Mật khẩu" th:field="*{password}" size="20" id="pw"/>
         
         <label for="name">Tên</label>
         <input type="text" placeholder="Tên" th:field="*{name}" size="20" id="name"/>
@@ -43,7 +43,7 @@
         <input type="text" placeholder="Tuổi" th:field="*{age}" size="20" id="age"/>
         
         <label for="mail">E-mail</label>
-        <input type="text" placeholder="mail" th:field="*{mail}" size="30" id="mail"/>
+        <input type="text" placeholder="mail" th:field="*{email}" size="30" id="mail"/>
         
         <button type="submit">Thay đổi</button>
     </form>
