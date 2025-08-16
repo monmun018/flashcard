@@ -6,10 +6,13 @@ import com.app.flashcard.api.dto.response.ApiResponse;
 import com.app.flashcard.api.dto.response.LoginResponse;
 import com.app.flashcard.api.dto.response.UserResponse;
 import com.app.flashcard.shared.security.JwtUtil;
+import com.app.flashcard.shared.security.LoginAttemptService;
+import com.app.flashcard.shared.utils.IpUtils;
 import com.app.flashcard.user.model.User;
 import com.app.flashcard.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -42,13 +45,32 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+
     @Operation(summary = "User login", description = "Authenticate user and return JWT token")
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+        String clientIp = IpUtils.getClientIpAddress(request);
+        
+        // Check if IP is blocked due to too many failed attempts
+        if (loginAttemptService.isBlocked(clientIp)) {
+            long remainingMinutes = loginAttemptService.getBlockRemainingMinutes(clientIp);
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(ApiResponse.error(
+                    "Tài khoản tạm thời bị khóa do quá nhiều lần đăng nhập sai. Vui lòng thử lại sau " + remainingMinutes + " phút.",
+                    "Too many failed attempts. Account temporarily blocked."
+                ));
+        }
+        
         try {
+            // Authenticate - Spring Security will handle all validation
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getLoginId(), loginRequest.getPassword())
             );
+
+            // Register successful attempt (clears any previous failed attempts)
+            loginAttemptService.registerSuccessfulAttempt(clientIp);
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getLoginId());
             String token = jwtUtil.generateToken(userDetails);
@@ -66,8 +88,18 @@ public class AuthController {
             return ResponseEntity.ok(ApiResponse.success(loginResponse, "Login successful"));
 
         } catch (BadCredentialsException e) {
+            // Register failed attempt for rate limiting
+            loginAttemptService.registerFailedAttempt(clientIp);
+            
+            // Provide additional info about remaining attempts (but still generic for security)
+            int remainingAttempts = loginAttemptService.getRemainingAttempts(clientIp);
+            String message = "Thông tin đăng nhập không chính xác";
+            if (remainingAttempts > 0) {
+                message += ". Còn " + remainingAttempts + " lần thử.";
+            }
+            
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error("Invalid credentials", "Login failed"));
+                .body(ApiResponse.error(message, "Invalid credentials"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("Authentication failed", e.getMessage()));

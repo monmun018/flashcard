@@ -31,7 +31,7 @@ public class DeckApiController {
     public ResponseEntity<ApiResponse<List<DeckResponse>>> getUserDecks(
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
         try {
-            List<Deck> decks = deckService.findDecksByUserID(userPrincipal.getUserID());
+            List<Deck> decks = deckService.findDecksByUserID(userPrincipal.getUserID().intValue());
             List<DeckResponse> deckResponses = decks.stream()
                 .map(this::convertToDeckResponse)
                 .collect(Collectors.toList());
@@ -71,7 +71,7 @@ public class DeckApiController {
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
         try {
             Deck deck = new Deck();
-            deck.setUserID(userPrincipal.getUserID());
+            deck.setUserID(userPrincipal.getUserID().intValue());
             deck.setDeckName(request.getDeckName());
             
             Deck savedDeck = deckService.save(deck);

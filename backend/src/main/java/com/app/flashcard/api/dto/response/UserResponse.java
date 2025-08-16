@@ -2,7 +2,7 @@ package com.app.flashcard.api.dto.response;
 
 public class UserResponse {
     
-    private Integer id;
+    private Long id;
     private String loginId;
     private String name;
     private Integer age;
@@ -10,7 +10,7 @@ public class UserResponse {
     
     public UserResponse() {}
     
-    public UserResponse(Integer id, String loginId, String name, Integer age, String email) {
+    public UserResponse(Long id, String loginId, String name, Integer age, String email) {
         this.id = id;
         this.loginId = loginId;
         this.name = name;
@@ -18,11 +18,11 @@ public class UserResponse {
         this.email = email;
     }
     
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
     
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
     

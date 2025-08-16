@@ -5,6 +5,9 @@ import { useAuthStore } from './shared/store/auth';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { CreateDeckPage } from './pages/CreateDeckPage';
+import { DeckDetailPage } from './pages/DeckDetailPage';
+import { CardCreatePage } from './pages/CardCreatePage';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -76,6 +79,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/decks/create"
+              element={
+                <ProtectedRoute>
+                  <CreateDeckPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/decks/:id"
+              element={
+                <ProtectedRoute>
+                  <DeckDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/decks/:deckId/cards/create"
+              element={
+                <ProtectedRoute>
+                  <CardCreatePage />
                 </ProtectedRoute>
               }
             />

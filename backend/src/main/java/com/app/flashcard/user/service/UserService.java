@@ -88,7 +88,7 @@ public class UserService {
      * @return Updated user
      * @throws EntityNotFoundException if user not found
      */
-    public User updateProfile(int userId, String password, String name, int age, String email) {
+    public User updateProfile(Long userId, String password, String name, int age, String email) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             throw new EntityNotFoundException("User not found with ID: " + userId);
@@ -110,7 +110,7 @@ public class UserService {
      * @throws EntityNotFoundException if user not found
      */
     @Transactional(readOnly = true)
-    public User findById(int userID) {
+    public User findById(Long userID) {
         Optional<User> userOpt = userRepository.findById(userID);
         if (userOpt.isEmpty()) {
             throw new EntityNotFoundException("User not found with ID: " + userID);
@@ -189,5 +189,67 @@ public class UserService {
      */
     public User save(User user) {
         return userRepository.save(user);
+    }
+    
+    // Modern methods for flexible login support
+    
+    /**
+     * Find user by any login identifier (username, email, or legacy userLoginID)
+     * @param loginIdentifier Username, email, or legacy userLoginID
+     * @return User if found, null otherwise
+     */
+    @Transactional(readOnly = true)
+    public User findByLoginIdentifier(String loginIdentifier) {
+        return userRepository.findByLoginIdentifier(loginIdentifier).orElse(null);
+    }
+    
+    /**
+     * Check if any login identifier exists (username, email, or legacy userLoginID)
+     * @param identifier Username, email, or legacy userLoginID to check
+     * @return true if exists, false otherwise
+     */
+    @Transactional(readOnly = true)
+    public boolean existsByAnyLoginIdentifier(String identifier) {
+        return userRepository.existsByAnyLoginIdentifier(identifier);
+    }
+    
+    /**
+     * Find user by username
+     * @param username Username
+     * @return User if found, null otherwise
+     */
+    @Transactional(readOnly = true)
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username).orElse(null);
+    }
+    
+    /**
+     * Find user by email
+     * @param email Email address
+     * @return User if found, null otherwise
+     */
+    @Transactional(readOnly = true)
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email).orElse(null);
+    }
+    
+    /**
+     * Check if username exists
+     * @param username Username to check
+     * @return true if exists, false otherwise
+     */
+    @Transactional(readOnly = true)
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+    
+    /**
+     * Check if email exists
+     * @param email Email to check
+     * @return true if exists, false otherwise
+     */
+    @Transactional(readOnly = true)
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 }

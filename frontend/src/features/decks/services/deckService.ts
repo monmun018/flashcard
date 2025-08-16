@@ -22,6 +22,16 @@ export const deckService = {
     return response.data;
   },
 
+  async getDeckById(deckId: number): Promise<Deck> {
+    const response = await apiClient.get<Deck>(`/decks/${deckId}`);
+    
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to fetch deck');
+    }
+    
+    return response.data;
+  },
+
   async createDeck(deckData: DeckCreateRequest): Promise<Deck> {
     const response = await apiClient.post<Deck>('/decks', deckData);
     

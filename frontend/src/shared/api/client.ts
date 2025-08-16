@@ -23,8 +23,9 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error) => {
-        if (error.response?.status === 401) {
-          // Token expired or invalid
+        // Don't redirect for login attempts - let the auth service handle these errors
+        if (error.response?.status === 401 && !error.config?.url?.includes('/auth/login')) {
+          // Token expired or invalid for protected routes
           this.clearAuth();
           window.location.href = '/login';
         }

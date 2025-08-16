@@ -21,23 +21,38 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     /**
      * Load user by username for Spring Security authentication.
+     * Now supports flexible login: username, email, or legacy userLoginID
      * 
-     * @param username The login ID entered by the user
+     * @param loginIdentifier The login identifier entered by the user (username, email, or legacy loginID)
      * @return UserDetails object containing user information
      * @throws UsernameNotFoundException if user is not found
      */
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String loginIdentifier) throws UsernameNotFoundException {
         try {
-            // Use UserService to find user by login ID
-            User user = userService.findByLoginId(username);
+            // Try modern flexible login first
+            User user = userService.findByLoginIdentifier(loginIdentifier);
+            
+            if (user == null) {
+                // Fallback to legacy method for backward compatibility
+                try {
+                    user = userService.findByLoginId(loginIdentifier);
+                } catch (EntityNotFoundException e) {
+                    throw new UsernameNotFoundException("User not found with login identifier: " + loginIdentifier, e);
+                }
+            }
+            
+            // Check if account is active and not locked
+            if (!user.isAccountActive()) {
+                throw new UsernameNotFoundException("User account is not active: " + loginIdentifier);
+            }
             
             // Wrap User entity in UserPrincipal for Spring Security
             return new UserPrincipal(user);
             
-        } catch (EntityNotFoundException e) {
-            // Convert our custom exception to Spring Security exception
-            throw new UsernameNotFoundException("User not found with login ID: " + username, e);
+        } catch (Exception e) {
+            // Convert any exception to Spring Security exception
+            throw new UsernameNotFoundException("User not found with login identifier: " + loginIdentifier, e);
         }
     }
 }

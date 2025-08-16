@@ -59,6 +59,7 @@ export interface Deck {
   newCardNum: number;
   learningCardNum: number;
   dueCardNum: number;
+  createdDate?: string;
 }
 
 export interface DeckCreateRequest {
