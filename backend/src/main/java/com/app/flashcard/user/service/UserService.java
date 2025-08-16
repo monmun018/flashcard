@@ -1,6 +1,5 @@
 package com.app.flashcard.user.service;
 
-import com.app.flashcard.user.form.RegistForm;
 import com.app.flashcard.user.model.User;
 import com.app.flashcard.user.repository.UserRepository;
 import com.app.flashcard.shared.exception.EntityNotFoundException;
@@ -47,19 +46,23 @@ public class UserService {
     }
 
     /**
-     * Create a new user from registration form
-     * @param form Registration form data
+     * Create a new user with user data
+     * @param loginID User login ID
+     * @param password User password
+     * @param name User name
+     * @param age User age
+     * @param email User email
      * @return Created user
      * @throws ValidationException if loginID already exists
      */
-    public User createUser(RegistForm form) {
+    public User createUser(String loginID, String password, String name, int age, String email) {
         // Check if loginID already exists
-        if (isLoginIDExists(form.getLoginID())) {
+        if (isLoginIDExists(loginID)) {
             throw new ValidationException("Tài khoản đã tồn tại.");
         }
         
         try {
-            User user = new User().setByRegistForm(form);
+            User user = new User().setByUserData(loginID, password, name, age, email);
             return userRepository.save(user);
         } catch (Exception e) {
             throw new ValidationException("Đăng ký bị lỗi!");
@@ -78,21 +81,24 @@ public class UserService {
     /**
      * Update user profile information
      * @param userId User ID to update
-     * @param form Registration form with updated data
+     * @param password User password
+     * @param name User name
+     * @param age User age
+     * @param email User email
      * @return Updated user
      * @throws EntityNotFoundException if user not found
      */
-    public User updateProfile(int userId, RegistForm form) {
+    public User updateProfile(Long userId, String password, String name, int age, String email) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             throw new EntityNotFoundException("User not found with ID: " + userId);
         }
         
         User user = userOpt.get();
-        user.setUserPW(form.getPw());
-        user.setUserName(form.getName());
-        user.setUserAge(form.getAge());
-        user.setUserMail(form.getMail());
+        user.setUserPW(password);
+        user.setUserName(name);
+        user.setUserAge(age);
+        user.setUserMail(email);
         
         return userRepository.save(user);
     }
@@ -104,7 +110,7 @@ public class UserService {
      * @throws EntityNotFoundException if user not found
      */
     @Transactional(readOnly = true)
-    public User findById(int userID) {
+    public User findById(Long userID) {
         Optional<User> userOpt = userRepository.findById(userID);
         if (userOpt.isEmpty()) {
             throw new EntityNotFoundException("User not found with ID: " + userID);
@@ -129,42 +135,29 @@ public class UserService {
 
     /**
      * Create user with hashed password (for Spring Security)
-     * @param form Registration form data
+     * @param loginID User login ID
+     * @param password User password (will be hashed)
+     * @param name User name
+     * @param age User age
+     * @param email User email
      * @param passwordEncoder Password encoder to use for hashing
      * @return Created user
      * @throws ValidationException if loginID already exists
      */
-    public User createUserWithHashedPassword(RegistForm form, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+    public User createUserWithHashedPassword(String loginID, String password, String name, int age, String email, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         // Check if loginID already exists
-        if (isLoginIDExists(form.getLoginID())) {
+        if (isLoginIDExists(loginID)) {
             throw new ValidationException("Tài khoản đã tồn tại.");
         }
         
         try {
-            User user = new User().setByRegistForm(form);
-            // Hash password before saving
-            user.setUserPW(passwordEncoder.encode(form.getPw()));
+            User user = new User().setByUserData(loginID, passwordEncoder.encode(password), name, age, email);
             return userRepository.save(user);
         } catch (Exception e) {
             throw new ValidationException("Đăng ký bị lỗi!");
         }
     }
 
-    /**
-     * Create RegistForm from User for profile display
-     * @param user User entity
-     * @return RegistForm populated with user data
-     */
-    @Transactional(readOnly = true)
-    public RegistForm createRegistFormFromUser(User user) {
-        RegistForm form = new RegistForm();
-        form.setLoginID(user.getUserLoginID());
-        form.setPw(user.getUserPW());
-        form.setName(user.getUserName());
-        form.setAge(user.getUserAge());
-        form.setMail(user.getUserMail());
-        return form;
-    }
 
     // API-specific methods
     
@@ -196,5 +189,67 @@ public class UserService {
      */
     public User save(User user) {
         return userRepository.save(user);
+    }
+    
+    // Modern methods for flexible login support
+    
+    /**
+     * Find user by any login identifier (username, email, or legacy userLoginID)
+     * @param loginIdentifier Username, email, or legacy userLoginID
+     * @return User if found, null otherwise
+     */
+    @Transactional(readOnly = true)
+    public User findByLoginIdentifier(String loginIdentifier) {
+        return userRepository.findByLoginIdentifier(loginIdentifier).orElse(null);
+    }
+    
+    /**
+     * Check if any login identifier exists (username, email, or legacy userLoginID)
+     * @param identifier Username, email, or legacy userLoginID to check
+     * @return true if exists, false otherwise
+     */
+    @Transactional(readOnly = true)
+    public boolean existsByAnyLoginIdentifier(String identifier) {
+        return userRepository.existsByAnyLoginIdentifier(identifier);
+    }
+    
+    /**
+     * Find user by username
+     * @param username Username
+     * @return User if found, null otherwise
+     */
+    @Transactional(readOnly = true)
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username).orElse(null);
+    }
+    
+    /**
+     * Find user by email
+     * @param email Email address
+     * @return User if found, null otherwise
+     */
+    @Transactional(readOnly = true)
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email).orElse(null);
+    }
+    
+    /**
+     * Check if username exists
+     * @param username Username to check
+     * @return true if exists, false otherwise
+     */
+    @Transactional(readOnly = true)
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+    
+    /**
+     * Check if email exists
+     * @param email Email to check
+     * @return true if exists, false otherwise
+     */
+    @Transactional(readOnly = true)
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 }

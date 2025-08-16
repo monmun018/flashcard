@@ -2,7 +2,24 @@
 
 ## Overview
 
-The Flashcard Application follows a modern, containerized microservice architecture with a React SPA frontend and Spring Boot REST API backend, designed for scalability and maintainability.
+The Flashcard Application follows a modern, containerized microservice architecture with a React SPA frontend and Spring Boot REST API backend. The application has been fully migrated from a dual-architecture (web + API) to a pure API-first design, optimized for scalability and maintainability.
+
+## Architecture Migration Completed ✅
+
+**Legacy Components Removed:**
+- All Thymeleaf web controllers (`@Controller`)
+- Server-side template rendering 
+- Static asset serving from backend
+- Form binding objects
+- Session-based authentication
+- Web-specific DTOs and configurations
+
+**Modern Architecture Achieved:**
+- Pure REST API backend with JWT authentication
+- Stateless, scalable backend design
+- React SPA frontend consuming REST endpoints
+- Clean separation of concerns
+- Optimized for containerized deployment
 
 ## System Architecture
 
@@ -132,11 +149,9 @@ com.app.flashcard/
 │       ├── request/       # Request DTOs
 │       └── response/      # Response DTOs
 ├── card/                  # Card domain
-│   ├── controller/        # Web controllers
 │   ├── service/          # Business logic
 │   ├── model/            # JPA entities
-│   ├── repository/       # Data access
-│   └── dto/              # Domain DTOs
+│   └── repository/       # Data access
 ├── deck/                  # Deck domain
 ├── learning/              # Learning domain
 ├── user/                  # User domain

@@ -24,11 +24,6 @@ spring:
   flyway:
     enabled: false
 
-  # Thymeleaf Configuration
-  thymeleaf:
-    prefix: classpath:/templates/
-    suffix: .html
-    cache: false
 
 # Logging Configuration for Docker
 logging:

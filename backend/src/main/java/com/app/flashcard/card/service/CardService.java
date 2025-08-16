@@ -1,6 +1,5 @@
 package com.app.flashcard.card.service;
 
-import com.app.flashcard.card.form.CardForm;
 import com.app.flashcard.card.model.Card;
 import com.app.flashcard.card.repository.CardRepository;
 import com.app.flashcard.shared.exception.EntityNotFoundException;
@@ -32,16 +31,18 @@ public class CardService {
     }
 
     /**
-     * Create a new card from CardForm
-     * @param form CardForm containing card data
+     * Create a new card with card data
+     * @param deckID Deck ID for the card
+     * @param frontContent Front content of the card
+     * @param backContent Back content of the card
      * @return Created card
      */
-    public Card createCard(CardForm form) {
+    public Card createCard(int deckID, String frontContent, String backContent) {
         Card newCard = new Card();
         newCard.setStatus(0); // New card starts with status 0
-        newCard.setDeckID((int) form.getDeckID());
-        newCard.setFontContent(form.getFontContent());
-        newCard.setBackContent(form.getBackContent());
+        newCard.setDeckID(deckID);
+        newCard.setFontContent(frontContent);
+        newCard.setBackContent(backContent);
         newCard.setRemindTime(LocalDate.now()); // Set initial remind time to today
         return cardRepository.save(newCard);
     }

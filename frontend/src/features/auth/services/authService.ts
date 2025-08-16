@@ -3,23 +3,39 @@ import type { LoginRequest, RegisterRequest, LoginResponse, User } from '../../.
 
 export const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
-    
-    if (!response.success || !response.data) {
-      throw new Error(response.error || 'Login failed');
+    try {
+      const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
+      
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Login failed');
+      }
+      
+      return response.data;
+    } catch (error: any) {
+      // Handle axios error response
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error(error.message || 'Login failed');
     }
-    
-    return response.data;
   },
 
   async register(userData: RegisterRequest): Promise<User> {
-    const response = await apiClient.post<User>('/auth/register', userData);
-    
-    if (!response.success || !response.data) {
-      throw new Error(response.error || 'Registration failed');
+    try {
+      const response = await apiClient.post<User>('/auth/register', userData);
+      
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Registration failed');
+      }
+      
+      return response.data;
+    } catch (error: any) {
+      // Handle axios error response
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      }
+      throw new Error(error.message || 'Registration failed');
     }
-    
-    return response.data;
   },
 
   async getCurrentUser(): Promise<User> {

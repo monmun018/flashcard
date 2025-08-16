@@ -21,15 +21,10 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: false
 
-  # Flyway Configuration (disabled)
+  # Flyway Configuration (disabled for testing)
   flyway:
     enabled: false
 
-  # Thymeleaf Configuration
-  thymeleaf:
-    prefix: classpath:/templates/
-    suffix: .html
-    cache: false
 
 # Logging Configuration
 logging:

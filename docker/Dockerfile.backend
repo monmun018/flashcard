@@ -3,12 +3,12 @@ FROM openjdk:21-jdk-slim
 WORKDIR /app
 
 # Copy Gradle wrapper and build files
-COPY gradlew ./
-COPY gradle/ gradle/
-COPY build.gradle settings.gradle ./
+COPY backend/gradlew ./
+COPY backend/gradle/ gradle/
+COPY backend/build.gradle backend/settings.gradle ./
 
 # Copy source code
-COPY src/ src/
+COPY backend/src/ src/
 
 # Build the application
 RUN ./gradlew bootJar --no-daemon

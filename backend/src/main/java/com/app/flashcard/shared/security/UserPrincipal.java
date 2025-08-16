@@ -72,7 +72,7 @@ public class UserPrincipal implements UserDetails {
      * 
      * @return User ID
      */
-    public int getUserId() {
+    public Long getUserId() {
         return user.getUserID();
     }
 
@@ -90,7 +90,7 @@ public class UserPrincipal implements UserDetails {
      * 
      * @return User ID
      */
-    public int getUserID() {
+    public Long getUserID() {
         return user.getUserID();
     }
 }

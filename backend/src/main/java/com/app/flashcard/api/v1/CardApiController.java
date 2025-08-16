@@ -102,6 +102,11 @@ public class CardApiController {
             card.setBackContent(request.getBackContent());
             
             Card savedCard = cardService.save(card);
+            
+            // Update deck statistics after creating a new card
+            deckService.updateDeckStatistics(deck);
+            deckService.save(deck);
+            
             CardResponse cardResponse = convertToCardResponse(savedCard);
             
             return ResponseEntity.status(HttpStatus.CREATED)
@@ -165,6 +170,11 @@ public class CardApiController {
             }
             
             cardService.deleteByCardID(cardId);
+            
+            // Update deck statistics after deleting a card
+            deckService.updateDeckStatistics(deck);
+            deckService.save(deck);
+            
             return ResponseEntity.ok(ApiResponse.success(null, "Card deleted successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

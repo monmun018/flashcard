@@ -1,6 +1,5 @@
 package com.app.flashcard.deck.service;
 
-import com.app.flashcard.deck.form.DeckForm;
 import com.app.flashcard.deck.model.Deck;
 import com.app.flashcard.card.repository.CardRepository;
 import com.app.flashcard.deck.repository.DeckRepository;
@@ -58,15 +57,6 @@ public class DeckService {
         return deckRepository.save(newDeck);
     }
 
-    /**
-     * Create deck from DeckForm
-     * @param form DeckForm containing deck data
-     * @param userID User ID who owns the deck
-     * @return Created deck
-     */
-    public Deck createDeck(DeckForm form, int userID) {
-        return createDeck(form.getDeckName(), userID);
-    }
 
     /**
      * Delete a deck and all its cards
