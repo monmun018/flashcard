@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers different deployment strategies for the Flashcard Application, from local development to production environments.
+This guide covers different deployment strategies for the Flashcard Application, from local development to production environments. The application now uses a pure REST API + React SPA architecture (legacy Thymeleaf web controllers removed).
 
 ## Quick Start (Docker Compose)
 
@@ -295,6 +295,13 @@ az container create \
 ```
 
 ### Self-Hosted Production
+
+### Simplified Architecture Benefits
+With legacy web controllers removed, deployment is now simpler:
+- No static asset serving from backend
+- No template compilation
+- Stateless JWT authentication (no session store needed)
+- Pure API backend (easier to scale)
 
 #### Using Docker Compose on VPS
 

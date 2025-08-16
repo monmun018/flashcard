@@ -1,9 +1,10 @@
 package com.app.flashcard.deck.service;
 
-import com.app.flashcard.deck.form.DeckForm;
 import com.app.flashcard.deck.model.Deck;
 import com.app.flashcard.deck.repository.DeckRepository;
 import com.app.flashcard.card.repository.CardRepository;
+import com.app.flashcard.card.model.Card;
+import com.app.flashcard.shared.exception.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,13 +13,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,7 +35,6 @@ class DeckServiceTest {
     private DeckService deckService;
 
     private Deck testDeck;
-    private DeckForm testDeckForm;
 
     @BeforeEach
     void setUp() {
@@ -45,132 +45,194 @@ class DeckServiceTest {
         testDeck.setNewCardNum(5);
         testDeck.setLearningCardNum(3);
         testDeck.setDueCardNum(2);
-
-        testDeckForm = new DeckForm();
-        testDeckForm.setDeckName("Test Deck");
     }
 
     @Test
     void testCreateDeck_Success() {
-        // Given
         when(deckRepository.save(any(Deck.class))).thenReturn(testDeck);
 
-        // When
-        deckService.createDeck(testDeckForm, 100);
+        Deck result = deckService.createDeck("Test Deck", 100);
 
-        // Then
+        assertNotNull(result);
+        assertEquals("Test Deck", result.getDeckName());
+        assertEquals(100, result.getUserID());
         verify(deckRepository).save(any(Deck.class));
     }
 
     @Test
-    void testGetDecksByUserWithStatistics_Success() {
-        // Given
-        List<Deck> mockDecks = Arrays.asList(testDeck);
-        when(deckRepository.findByUserID(100)).thenReturn(mockDecks);
-        when(cardRepository.countNewCardNum(1)).thenReturn(5); // new cards
-        when(cardRepository.countLearningCardNum(1)).thenReturn(3); // learning cards
-        when(cardRepository.countDueCardNum(1)).thenReturn(2); // due cards
+    void testGetDecksByUserWithStatistics() {
+        List<Deck> decks = Arrays.asList(testDeck);
+        when(deckRepository.findByUserID(100)).thenReturn(decks);
+        when(cardRepository.countNewCardNum(1)).thenReturn(5);
+        when(cardRepository.countLearningCardNum(1)).thenReturn(3);
+        when(cardRepository.countDueCardNum(1)).thenReturn(2);
+        when(deckRepository.saveAll(decks)).thenReturn(decks);
 
-        // When
         List<Deck> result = deckService.getDecksByUserWithStatistics(100);
 
-        // Then
         assertNotNull(result);
         assertEquals(1, result.size());
-        Deck deck = result.get(0);
-        assertEquals("Test Deck", deck.getDeckName());
-        verify(cardRepository).countNewCardNum(1);
-        verify(cardRepository).countLearningCardNum(1);
-        verify(cardRepository).countDueCardNum(1);
+        assertEquals(testDeck, result.get(0));
+        verify(deckRepository).saveAll(decks);
     }
 
     @Test
-    void testGetDecksByUserWithStatistics_EmptyList() {
-        // Given
-        when(deckRepository.findByUserID(100)).thenReturn(Arrays.asList());
+    void testGetDecksByUser() {
+        List<Deck> decks = Arrays.asList(testDeck);
+        when(deckRepository.findByUserID(100)).thenReturn(decks);
 
-        // When
-        List<Deck> result = deckService.getDecksByUserWithStatistics(100);
+        List<Deck> result = deckService.getDecksByUser(100);
 
-        // Then
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void testGetDeckOptionsForUser_Success() {
-        // Given
-        List<Deck> mockDecks = Arrays.asList(testDeck);
-        when(deckRepository.findByUserID(100)).thenReturn(mockDecks);
-
-        // When
-        Map<Integer, String> result = deckService.getDeckOptionsForUser(100);
-
-        // Then
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertTrue(result.containsKey(1));
-        assertEquals("Test Deck", result.get(1));
+        assertEquals(testDeck, result.get(0));
     }
 
     @Test
-    void testGetDeckOptionsForUser_EmptyList() {
-        // Given
-        when(deckRepository.findByUserID(100)).thenReturn(Arrays.asList());
+    void testDeleteDeck() {
+        List<Card> cards = Arrays.asList(new Card());
+        when(cardRepository.findByDeckIDOrderByRemindTimeAsc(1)).thenReturn(cards);
 
-        // When
-        Map<Integer, String> result = deckService.getDeckOptionsForUser(100);
-
-        // Then
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void testGetDeckOptionsForUser_MultipleDecks() {
-        // Given
-        Deck deck2 = new Deck();
-        deck2.setDeckID(2);
-        deck2.setDeckName("Second Deck");
-        
-        List<Deck> mockDecks = Arrays.asList(testDeck, deck2);
-        when(deckRepository.findByUserID(100)).thenReturn(mockDecks);
-
-        // When
-        Map<Integer, String> result = deckService.getDeckOptionsForUser(100);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        assertEquals("Test Deck", result.get(1));
-        assertEquals("Second Deck", result.get(2));
-    }
-
-    @Test
-    void testDeleteDeck_Success() {
-        // Given
-        when(cardRepository.findByDeckIDOrderByRemindTimeAsc(1)).thenReturn(Arrays.asList());
-
-        // When
         deckService.deleteDeck(1);
 
-        // Then
-        verify(cardRepository).findByDeckIDOrderByRemindTimeAsc(1);
-        verify(cardRepository).deleteAll(any());
+        verify(cardRepository).deleteAll(cards);
         verify(deckRepository).deleteById(1);
     }
 
     @Test
-    void testDeleteDeck_CascadeDelete() {
-        // Given
-        when(cardRepository.findByDeckIDOrderByRemindTimeAsc(1)).thenReturn(Arrays.asList());
+    void testUpdateDeckStatistics_Single() {
+        when(cardRepository.countNewCardNum(1)).thenReturn(5);
+        when(cardRepository.countLearningCardNum(1)).thenReturn(3);
+        when(cardRepository.countDueCardNum(1)).thenReturn(2);
 
-        // When
-        deckService.deleteDeck(1);
+        deckService.updateDeckStatistics(testDeck);
 
-        // Then
-        // Verify that cards are deleted first, then deck
-        verify(cardRepository).deleteAll(any());
+        assertEquals(5, testDeck.getNewCardNum());
+        assertEquals(3, testDeck.getLearningCardNum());
+        assertEquals(2, testDeck.getDueCardNum());
+    }
+
+    @Test
+    void testUpdateDeckStatistics_Multiple() {
+        List<Deck> decks = Arrays.asList(testDeck);
+        when(cardRepository.countNewCardNum(1)).thenReturn(5);
+        when(cardRepository.countLearningCardNum(1)).thenReturn(3);
+        when(cardRepository.countDueCardNum(1)).thenReturn(2);
+        when(deckRepository.saveAll(decks)).thenReturn(decks);
+
+        deckService.updateDeckStatistics(decks);
+
+        verify(deckRepository).saveAll(decks);
+    }
+
+    @Test
+    void testGetDeckOptionsForUser() {
+        List<Deck> decks = Arrays.asList(testDeck);
+        when(deckRepository.findByUserID(100)).thenReturn(decks);
+
+        Map<Integer, String> result = deckService.getDeckOptionsForUser(100);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Test Deck", result.get(1));
+    }
+
+    @Test
+    void testFindById_Success() {
+        when(deckRepository.findById(1)).thenReturn(Optional.of(testDeck));
+
+        Deck result = deckService.findById(1);
+
+        assertNotNull(result);
+        assertEquals(1, result.getDeckID());
+    }
+
+    @Test
+    void testFindById_NotFound() {
+        when(deckRepository.findById(999)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, 
+            () -> deckService.findById(999));
+    }
+
+    @Test
+    void testIsDeckOwnedByUser_True() {
+        when(deckRepository.findById(1)).thenReturn(Optional.of(testDeck));
+
+        boolean result = deckService.isDeckOwnedByUser(1, 100);
+
+        assertTrue(result);
+    }
+
+    @Test
+    void testIsDeckOwnedByUser_False() {
+        when(deckRepository.findById(1)).thenReturn(Optional.of(testDeck));
+
+        boolean result = deckService.isDeckOwnedByUser(1, 999);
+
+        assertFalse(result);
+    }
+
+    @Test
+    void testGetDecksCountByUser() {
+        List<Deck> decks = Arrays.asList(testDeck, testDeck);
+        when(deckRepository.findByUserID(100)).thenReturn(decks);
+
+        long result = deckService.getDecksCountByUser(100);
+
+        assertEquals(2, result);
+    }
+
+    @Test
+    void testFindDecksByUserID() {
+        List<Deck> decks = Arrays.asList(testDeck);
+        when(deckRepository.findByUserID(100)).thenReturn(decks);
+
+        List<Deck> result = deckService.findDecksByUserID(100);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(testDeck, result.get(0));
+    }
+
+    @Test
+    void testFindByDeckID_Found() {
+        when(deckRepository.findById(1)).thenReturn(Optional.of(testDeck));
+
+        Deck result = deckService.findByDeckID(1);
+
+        assertNotNull(result);
+        assertEquals(testDeck, result);
+    }
+
+    @Test
+    void testFindByDeckID_NotFound() {
+        when(deckRepository.findById(999)).thenReturn(Optional.empty());
+
+        Deck result = deckService.findByDeckID(999);
+
+        assertNull(result);
+    }
+
+    @Test
+    void testSave() {
+        when(deckRepository.save(testDeck)).thenReturn(testDeck);
+
+        Deck result = deckService.save(testDeck);
+
+        assertNotNull(result);
+        assertEquals(testDeck, result);
+        verify(deckRepository).save(testDeck);
+    }
+
+    @Test
+    void testDeleteByDeckID() {
+        List<Card> cards = Arrays.asList(new Card());
+        when(cardRepository.findByDeckIDOrderByRemindTimeAsc(1)).thenReturn(cards);
+
+        deckService.deleteByDeckID(1);
+
+        verify(cardRepository).deleteAll(cards);
         verify(deckRepository).deleteById(1);
     }
 }

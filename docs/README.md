@@ -1,6 +1,22 @@
 # Documentation Index
 
-Welcome to the Flashcard Application documentation. This directory contains comprehensive guides for developers, system administrators, and API consumers.
+Welcome to the Flashcard Application documentation. This directory contains comprehensive guides for developers, system administrators, and API consumers. **The application has been successfully migrated to a pure REST API + React SPA architecture.**
+
+## 🎉 Architecture Migration Completed
+
+The flashcard application has been successfully modernized:
+
+✅ **Removed Legacy Components:**
+- Thymeleaf web controllers and templates
+- Static asset serving from backend
+- Session-based authentication
+- Form binding objects
+
+✅ **Achieved Modern Architecture:**
+- Pure REST API backend with JWT authentication
+- React SPA frontend
+- Stateless, scalable design
+- Clean separation of concerns
 
 ## 📖 Documentation Structure
 
@@ -14,25 +30,28 @@ Welcome to the Flashcard Application documentation. This directory contains comp
 
 ### 🏗️ [Architecture Guide](./ARCHITECTURE.md)
 **Technical deep-dive for developers and architects**
-- System architecture overview
+- Pure API + React SPA architecture
+- Legacy migration completed
+- Backend architecture (Spring Boot REST API)
 - Frontend architecture (React SPA)
-- Backend architecture (Spring Boot)
 - Database design and relationships
-- Security architecture
-- Performance considerations
+- JWT-based security architecture
+- Performance optimizations
 - Future enhancement roadmap
 
 ### 🔌 [API Documentation](./API.md)
 **Complete REST API reference**
-- Authentication endpoints
+- JWT authentication endpoints
 - Deck management API
 - Card management API
 - Request/response examples
 - Error codes and handling
 - Data models and schemas
+- Pure REST API (no web endpoints)
 
 ### 🚀 [Deployment Guide](./DEPLOYMENT.md)
 **Environment setup and deployment strategies**
+- Simplified deployment (pure API architecture)
 - Local development setup
 - Docker deployment options
 - Cloud platform deployment (AWS, GCP, Azure)

@@ -1,7 +1,5 @@
 package com.app.flashcard.user.model;
 
-import com.app.flashcard.user.form.RegistForm;
-
 import jakarta.persistence.*;
 
 @Entity
@@ -79,12 +77,12 @@ public class User {
         this.userMail = userMail;
     }
 
-    public User setByRegistForm(RegistForm form){
-            this.userLoginID = form.getLoginID();
-            this.userPW = form.getPw();
-            this.userName = form.getName();
-            this.userAge = form.getAge();
-            this.userMail = form.getMail();
+    public User setByUserData(String loginID, String password, String name, int age, String email){
+            this.userLoginID = loginID;
+            this.userPW = password;
+            this.userName = name;
+            this.userAge = age;
+            this.userMail = email;
         return this;
     }
 }

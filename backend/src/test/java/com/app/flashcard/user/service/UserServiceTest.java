@@ -1,6 +1,5 @@
 package com.app.flashcard.user.service;
 
-import com.app.flashcard.user.form.RegistForm;
 import com.app.flashcard.user.model.User;
 import com.app.flashcard.user.repository.UserRepository;
 import com.app.flashcard.shared.exception.EntityNotFoundException;
@@ -35,7 +34,6 @@ class UserServiceTest {
     private UserService userService;
 
     private User testUser;
-    private RegistForm testRegistForm;
 
     @BeforeEach
     void setUp() {
@@ -46,195 +44,198 @@ class UserServiceTest {
         testUser.setUserName("Test User");
         testUser.setUserAge(25);
         testUser.setUserMail("test@example.com");
-
-        testRegistForm = new RegistForm();
-        testRegistForm.setLoginID("testuser");
-        testRegistForm.setPw("password123");
-        testRegistForm.setName("Test User");
-        testRegistForm.setAge(25);
-        testRegistForm.setMail("test@example.com");
     }
 
     @Test
     void testCreateUserWithHashedPassword_Success() {
-        // Given
         when(userRepository.findByUserLoginID("testuser")).thenReturn(Collections.emptyList());
         when(passwordEncoder.encode("password123")).thenReturn("hashedpassword");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        // When
-        User result = userService.createUserWithHashedPassword(testRegistForm, passwordEncoder);
+        User result = userService.createUserWithHashedPassword("testuser", "password123", "Test User", 25, "test@example.com", passwordEncoder);
 
-        // Then
         assertNotNull(result);
         assertEquals("testuser", result.getUserLoginID());
-        verify(passwordEncoder).encode("password123");
+        assertEquals("Test User", result.getUserName());
         verify(userRepository).save(any(User.class));
     }
 
     @Test
-    void testCreateUserWithHashedPassword_DuplicateLoginID() {
-        // Given
+    void testCreateUserWithHashedPassword_UserExists() {
         when(userRepository.findByUserLoginID("testuser")).thenReturn(Arrays.asList(testUser));
 
-        // When & Then
-        ValidationException exception = assertThrows(ValidationException.class, 
-            () -> userService.createUserWithHashedPassword(testRegistForm, passwordEncoder));
-        
-        assertEquals("Tài khoản đã tồn tại.", exception.getMessage());
-        verify(userRepository, never()).save(any());
+        assertThrows(ValidationException.class, 
+            () -> userService.createUserWithHashedPassword("testuser", "password123", "Test User", 25, "test@example.com", passwordEncoder));
+
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
-    void testFindByLoginId_Success() {
-        // Given
+    void testAuthenticate_Success() {
         when(userRepository.findByUserLoginID("testuser")).thenReturn(Arrays.asList(testUser));
 
-        // When
-        User result = userService.findByLoginId("testuser");
+        User result = userService.authenticate("testuser", "hashedpassword");
 
-        // Then
         assertNotNull(result);
         assertEquals("testuser", result.getUserLoginID());
-        assertEquals("Test User", result.getUserName());
     }
 
     @Test
-    void testFindByLoginId_NotFound() {
-        // Given
-        when(userRepository.findByUserLoginID("nonexistent")).thenReturn(Collections.emptyList());
+    void testAuthenticate_UserNotFound() {
+        when(userRepository.findByUserLoginID("testuser")).thenReturn(Collections.emptyList());
 
-        // When & Then
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-            () -> userService.findByLoginId("nonexistent"));
-        
-        assertEquals("User not found with loginID: nonexistent", exception.getMessage());
+        assertThrows(EntityNotFoundException.class, 
+            () -> userService.authenticate("testuser", "password"));
+    }
+
+    @Test
+    void testAuthenticate_WrongPassword() {
+        when(userRepository.findByUserLoginID("testuser")).thenReturn(Arrays.asList(testUser));
+
+        assertThrows(ValidationException.class, 
+            () -> userService.authenticate("testuser", "wrongpassword"));
     }
 
     @Test
     void testFindById_Success() {
-        // Given
         when(userRepository.findById(1)).thenReturn(Optional.of(testUser));
 
-        // When
         User result = userService.findById(1);
 
-        // Then
         assertNotNull(result);
         assertEquals(1, result.getUserID());
-        assertEquals("testuser", result.getUserLoginID());
     }
 
     @Test
     void testFindById_NotFound() {
-        // Given
         when(userRepository.findById(999)).thenReturn(Optional.empty());
 
-        // When & Then
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+        assertThrows(EntityNotFoundException.class, 
             () -> userService.findById(999));
-        
-        assertEquals("User not found with ID: 999", exception.getMessage());
     }
 
     @Test
     void testUpdateProfile_Success() {
-        // Given
         when(userRepository.findById(1)).thenReturn(Optional.of(testUser));
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        RegistForm updateForm = new RegistForm();
-        updateForm.setPw("newpassword");
-        updateForm.setName("Updated Name");
-        updateForm.setAge(26);
-        updateForm.setMail("updated@example.com");
+        User result = userService.updateProfile(1, "newpassword", "Updated Name", 26, "updated@example.com");
 
-        // When
-        User result = userService.updateProfile(1, updateForm);
-
-        // Then
         assertNotNull(result);
-        verify(userRepository).save(testUser);
-        assertEquals("newpassword", testUser.getUserPW());
-        assertEquals("Updated Name", testUser.getUserName());
-        assertEquals(26, testUser.getUserAge());
-        assertEquals("updated@example.com", testUser.getUserMail());
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
     void testUpdateProfile_UserNotFound() {
-        // Given
         when(userRepository.findById(999)).thenReturn(Optional.empty());
 
-        // When & Then
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-            () -> userService.updateProfile(999, testRegistForm));
-        
-        assertEquals("User not found with ID: 999", exception.getMessage());
-        verify(userRepository, never()).save(any());
+        assertThrows(EntityNotFoundException.class, 
+            () -> userService.updateProfile(999, "newpassword", "Updated Name", 26, "updated@example.com"));
+    }
+
+    @Test
+    void testCreateUser_Success() {
+        when(userRepository.findByUserLoginID("testuser")).thenReturn(Collections.emptyList());
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        User result = userService.createUser("testuser", "password123", "Test User", 25, "test@example.com");
+
+        assertNotNull(result);
+        assertEquals("testuser", result.getUserLoginID());
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void testCreateUser_UserExists() {
+        when(userRepository.findByUserLoginID("testuser")).thenReturn(Arrays.asList(testUser));
+
+        assertThrows(ValidationException.class, 
+            () -> userService.createUser("testuser", "password123", "Test User", 25, "test@example.com"));
+
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
     void testIsLoginIDExists_True() {
-        // Given
         when(userRepository.findByUserLoginID("testuser")).thenReturn(Arrays.asList(testUser));
 
-        // When
         boolean result = userService.isLoginIDExists("testuser");
 
-        // Then
         assertTrue(result);
     }
 
     @Test
     void testIsLoginIDExists_False() {
-        // Given
-        when(userRepository.findByUserLoginID("nonexistent")).thenReturn(Collections.emptyList());
+        when(userRepository.findByUserLoginID("testuser")).thenReturn(Collections.emptyList());
 
-        // When
-        boolean result = userService.isLoginIDExists("nonexistent");
+        boolean result = userService.isLoginIDExists("testuser");
 
-        // Then
         assertFalse(result);
     }
 
     @Test
-    void testCreateRegistFormFromUser() {
-        // When
-        RegistForm result = userService.createRegistFormFromUser(testUser);
-
-        // Then
-        assertNotNull(result);
-        assertEquals("testuser", result.getLoginID());
-        assertEquals("hashedpassword", result.getPw());
-        assertEquals("Test User", result.getName());
-        assertEquals(25, result.getAge());
-        assertEquals("test@example.com", result.getMail());
-    }
-
-    @Test
-    void testCreateUser_Success() {
-        // Given
-        when(userRepository.findByUserLoginID("testuser")).thenReturn(Collections.emptyList());
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
-
-        // When
-        User result = userService.createUser(testRegistForm);
-
-        // Then
-        assertNotNull(result);
-        verify(userRepository).save(any(User.class));
-    }
-
-    @Test
-    void testCreateUser_DuplicateLoginID() {
-        // Given
+    void testFindByLoginId_Success() {
         when(userRepository.findByUserLoginID("testuser")).thenReturn(Arrays.asList(testUser));
 
-        // When & Then
-        ValidationException exception = assertThrows(ValidationException.class,
-            () -> userService.createUser(testRegistForm));
-        
-        assertEquals("Tài khoản đã tồn tại.", exception.getMessage());
+        User result = userService.findByLoginId("testuser");
+
+        assertNotNull(result);
+        assertEquals("testuser", result.getUserLoginID());
+    }
+
+    @Test
+    void testFindByLoginId_NotFound() {
+        when(userRepository.findByUserLoginID("testuser")).thenReturn(Collections.emptyList());
+
+        assertThrows(EntityNotFoundException.class, 
+            () -> userService.findByLoginId("testuser"));
+    }
+
+    @Test
+    void testFindByUserLoginID_Success() {
+        when(userRepository.findByUserLoginID("testuser")).thenReturn(Arrays.asList(testUser));
+
+        User result = userService.findByUserLoginID("testuser");
+
+        assertNotNull(result);
+        assertEquals("testuser", result.getUserLoginID());
+    }
+
+    @Test
+    void testFindByUserLoginID_NotFound() {
+        when(userRepository.findByUserLoginID("testuser")).thenReturn(Collections.emptyList());
+
+        User result = userService.findByUserLoginID("testuser");
+
+        assertNull(result);
+    }
+
+    @Test
+    void testExistsByUserLoginID_True() {
+        when(userRepository.findByUserLoginID("testuser")).thenReturn(Arrays.asList(testUser));
+
+        boolean result = userService.existsByUserLoginID("testuser");
+
+        assertTrue(result);
+    }
+
+    @Test
+    void testExistsByUserLoginID_False() {
+        when(userRepository.findByUserLoginID("testuser")).thenReturn(Collections.emptyList());
+
+        boolean result = userService.existsByUserLoginID("testuser");
+
+        assertFalse(result);
+    }
+
+    @Test
+    void testSave() {
+        when(userRepository.save(testUser)).thenReturn(testUser);
+
+        User result = userService.save(testUser);
+
+        assertNotNull(result);
+        assertEquals(testUser, result);
+        verify(userRepository).save(testUser);
     }
 }

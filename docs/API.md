@@ -3,9 +3,10 @@
 ## Base Information
 
 - **Base URL**: `http://localhost:8080/api/v1`
-- **Authentication**: JWT Bearer Token
+- **Authentication**: JWT Bearer Token (stateless)
 - **Content-Type**: `application/json`
 - **API Version**: v1
+- **Architecture**: Pure REST API (legacy web controllers removed)
 
 ## Authentication
 
