@@ -131,7 +131,7 @@ const ProtectedRoute = ({ children }) => {
 - **Spring Boot 3.4.4** - Main framework
 - **Java 21** - LTS Java version
 - **Spring Security 6** - Authentication and authorization
-- **Spring Data JPA** - Data access layer
+- **MyBatis 3.0.3** - Data access layer (migrated from Spring Data JPA)
 - **PostgreSQL** - Primary database
 - **JWT** - Stateless authentication
 - **OpenAPI 3** - API documentation
@@ -150,8 +150,8 @@ com.app.flashcard/
 │       └── response/      # Response DTOs
 ├── card/                  # Card domain
 │   ├── service/          # Business logic
-│   ├── model/            # JPA entities
-│   └── repository/       # Data access
+│   ├── model/            # POJO models (Lombok-enhanced)
+│   └── repository/       # MyBatis mappers
 ├── deck/                  # Deck domain
 ├── learning/              # Learning domain
 ├── user/                  # User domain
@@ -188,22 +188,34 @@ public class UserService {
 
 **3. Repository Layer (Data Access):**
 ```java
-@Repository
-public interface UserRepository extends JpaRepository<User, Integer> {
-    Optional<User> findByUserLoginID(String userLoginID);
-    boolean existsByUserLoginID(String userLoginID);
+@Mapper
+public interface UserMapper {
+    UserPojo findById(@Param("id") Integer id);
+    UserPojo findByUserLoginID(@Param("userLoginID") String userLoginID);
+    List<UserPojo> findAll();
+    int insert(UserPojo user);
+    int update(UserPojo user);
+    int deleteById(@Param("id") Integer id);
 }
 ```
 
-**4. Model Layer (Entities):**
+**4. Model Layer (POJOs):**
 ```java
-@Entity
-@Table(name = "users")
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "UserID")
-    private int userID;
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserPojo {
+    private Integer userID;
+    private String userLoginID;
+    private String userPW;
+    private String userName;
+    private Integer userAge;
+    private String userMail;
+    
+    public boolean canLoginWith(String loginId) {
+        return this.userLoginID != null && this.userLoginID.equals(loginId);
+    }
 }
 ```
 
@@ -367,7 +379,7 @@ Gradle compilation → JAR generation → Docker image → Container
 **Database Optimization:**
 - Indexed queries on frequent lookups
 - Connection pooling with HikariCP
-- Lazy loading for JPA relationships
+- Optimized XML-based SQL queries with MyBatis
 
 **Caching (Planned):**
 - Redis for session data
@@ -411,7 +423,7 @@ Gradle compilation → JAR generation → Docker image → Container
 - Input validation with Bean Validation
 
 **Data Security:**
-- SQL injection prevention through JPA
+- SQL injection prevention through MyBatis parameterized queries
 - Sensitive data encryption
 - Audit logging (planned)
 

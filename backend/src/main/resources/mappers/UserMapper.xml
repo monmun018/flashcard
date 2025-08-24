@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.app.flashcard.user.repository.UserMapper">
+
+    <!-- Result Map for User -->
+    <resultMap id="UserResultMap" type="com.app.flashcard.user.model.UserPojo">
+        <id property="userID" column="UserID"/>
+        <!-- Legacy fields -->
+        <result property="userLoginID" column="UserLoginID"/>
+        <result property="userPW" column="UserPW"/>
+        <result property="userName" column="UserName"/>
+        <result property="userAge" column="UserAge"/>
+        <result property="userMail" column="UserMail"/>
+        <!-- Modern fields -->
+        <result property="modernUsername" column="username"/>
+        <result property="email" column="email"/>
+        <result property="firstName" column="first_name"/>
+        <result property="lastName" column="last_name"/>
+        <result property="dateOfBirth" column="date_of_birth"/>
+        <result property="phoneNumber" column="phone_number"/>
+        <result property="profilePicture" column="profile_picture"/>
+        <result property="status" column="status" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <result property="role" column="role" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+        <!-- Security fields -->
+        <result property="failedLoginAttempts" column="failed_login_attempts"/>
+        <result property="lockedUntil" column="locked_until"/>
+        <result property="lastLoginAt" column="last_login_at"/>
+        <!-- Audit fields -->
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- Basic CRUD Operations -->
+    <select id="findById" resultMap="UserResultMap">
+        SELECT * FROM users WHERE "UserID" = #{id}
+    </select>
+
+    <select id="findByUserLoginID" resultMap="UserResultMap">
+        SELECT * FROM users WHERE "UserLoginID" = #{loginId}
+    </select>
+
+    <select id="findByModernUsername" resultMap="UserResultMap">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
+
+    <select id="findByEmail" resultMap="UserResultMap">
+        SELECT * FROM users WHERE email = #{email}
+    </select>
+
+    <select id="findAll" resultMap="UserResultMap">
+        SELECT * FROM users ORDER BY "UserID"
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="userID" keyColumn="UserID">
+        INSERT INTO users (
+            "UserLoginID", "UserPW", "UserName", "UserAge", "UserMail",
+            username, email, first_name, last_name, date_of_birth,
+            phone_number, profile_picture, status, role,
+            failed_login_attempts, locked_until, last_login_at,
+            created_at, updated_at
+        ) VALUES (
+            #{userLoginID}, #{userPW}, #{userName}, #{userAge}, #{userMail},
+            #{modernUsername}, #{email}, #{firstName}, #{lastName}, #{dateOfBirth},
+            #{phoneNumber}, #{profilePicture}, #{status}::user_status, #{role}::user_role,
+            #{failedLoginAttempts}, #{lockedUntil}, #{lastLoginAt},
+            COALESCE(#{createdAt}, CURRENT_TIMESTAMP), COALESCE(#{updatedAt}, CURRENT_TIMESTAMP)
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE users SET
+            "UserPW" = #{userPW},
+            "UserName" = #{userName},
+            "UserAge" = #{userAge},
+            "UserMail" = #{userMail},
+            username = #{modernUsername},
+            email = #{email},
+            first_name = #{firstName},
+            last_name = #{lastName},
+            date_of_birth = #{dateOfBirth},
+            phone_number = #{phoneNumber},
+            profile_picture = #{profilePicture},
+            status = #{status}::user_status,
+            role = #{role}::user_role,
+            failed_login_attempts = #{failedLoginAttempts},
+            locked_until = #{lockedUntil},
+            last_login_at = #{lastLoginAt},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE "UserID" = #{userID}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM users WHERE "UserID" = #{id}
+    </delete>
+
+    <!-- Existence Checks -->
+    <select id="existsByUserLoginID" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM users WHERE "UserLoginID" = #{loginId}
+    </select>
+
+    <select id="existsByModernUsername" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM users WHERE username = #{username}
+    </select>
+
+    <select id="existsByEmail" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM users WHERE email = #{email}
+    </select>
+
+    <!-- Security Operations -->
+    <update id="updateFailedLoginAttempts">
+        UPDATE users SET 
+            failed_login_attempts = #{attempts},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE "UserID" = #{id}
+    </update>
+
+    <update id="updateLockedUntil">
+        UPDATE users SET 
+            locked_until = #{lockedUntil},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE "UserID" = #{id}
+    </update>
+
+    <update id="updateLastLoginAt">
+        UPDATE users SET 
+            last_login_at = #{lastLoginAt},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE "UserID" = #{id}
+    </update>
+
+    <!-- User Preferences Operations -->
+    <select id="findPreferences" resultType="map">
+        SELECT preference_key, preference_value 
+        FROM user_preferences 
+        WHERE user_id = #{userId}
+    </select>
+
+    <insert id="insertPreference">
+        INSERT INTO user_preferences (user_id, preference_key, preference_value)
+        VALUES (#{userId}, #{key}, #{value})
+        ON CONFLICT (user_id, preference_key) 
+        DO UPDATE SET preference_value = #{value}
+    </insert>
+
+    <update id="updatePreference">
+        UPDATE user_preferences SET 
+            preference_value = #{value}
+        WHERE user_id = #{userId} AND preference_key = #{key}
+    </update>
+
+    <delete id="deletePreference">
+        DELETE FROM user_preferences 
+        WHERE user_id = #{userId} AND preference_key = #{key}
+    </delete>
+
+    <delete id="deleteAllPreferences">
+        DELETE FROM user_preferences WHERE user_id = #{userId}
+    </delete>
+
+    <!-- Advanced Queries -->
+    <select id="findByStatus" resultMap="UserResultMap">
+        SELECT * FROM users 
+        WHERE status = #{status}::user_status
+        ORDER BY "UserID"
+    </select>
+
+    <select id="findByRole" resultMap="UserResultMap">
+        SELECT * FROM users 
+        WHERE role = #{role}::user_role
+        ORDER BY "UserID"
+    </select>
+
+    <select id="findLockedUsers" resultMap="UserResultMap">
+        SELECT * FROM users 
+        WHERE locked_until IS NOT NULL 
+        AND locked_until > CURRENT_TIMESTAMP
+        ORDER BY locked_until DESC
+    </select>
+
+    <select id="countUsers" resultType="int">
+        SELECT COUNT(*) FROM users
+    </select>
+
+    <select id="countActiveUsers" resultType="int">
+        SELECT COUNT(*) FROM users 
+        WHERE status = 'ACTIVE'::user_status
+        AND (locked_until IS NULL OR locked_until <= CURRENT_TIMESTAMP)
+    </select>
+
+</mapper>

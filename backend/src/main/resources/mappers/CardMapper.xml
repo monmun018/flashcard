@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.app.flashcard.card.repository.CardMapper">
+
+    <!-- Result Map for Card -->
+    <resultMap id="CardResultMap" type="com.app.flashcard.card.model.CardPojo">
+        <id property="cardID" column="CardID"/>
+        <result property="deckID" column="DeckID"/>
+        <result property="frontContent" column="FontContent"/>  <!-- Note: DB has typo "FontContent" -->
+        <result property="backContent" column="BackContent"/>
+        <result property="remindTime" column="RemindTime"/>
+        <result property="status" column="Status"/>
+    </resultMap>
+
+    <!-- Basic CRUD Operations -->
+    <select id="findById" resultMap="CardResultMap">
+        SELECT * FROM card WHERE "CardID" = #{id}
+    </select>
+
+    <select id="findByDeckId" resultMap="CardResultMap">
+        SELECT * FROM card 
+        WHERE "DeckID" = #{deckId}
+        ORDER BY "CardID"
+    </select>
+
+    <select id="findAll" resultMap="CardResultMap">
+        SELECT * FROM card ORDER BY "CardID"
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="cardID" keyColumn="CardID">
+        INSERT INTO card (
+            "DeckID", "FontContent", "BackContent", "RemindTime", "Status"
+        ) VALUES (
+            #{deckID}, #{frontContent}, #{backContent}, 
+            COALESCE(#{remindTime}, CURRENT_DATE), 
+            COALESCE(#{status}, 0)
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE card SET
+            "DeckID" = #{deckID},
+            "FontContent" = #{frontContent},
+            "BackContent" = #{backContent},
+            "RemindTime" = #{remindTime},
+            "Status" = #{status}
+        WHERE "CardID" = #{cardID}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM card WHERE "CardID" = #{id}
+    </delete>
+
+    <delete id="deleteByDeckId">
+        DELETE FROM card WHERE "DeckID" = #{deckId}
+    </delete>
+
+    <!-- Learning Queries -->
+    <select id="findDueCards" resultMap="CardResultMap">
+        SELECT * FROM card 
+        WHERE "DeckID" = #{deckId}
+        AND "RemindTime" &lt;= #{date}
+        AND "Status" IN (1, 2)
+        ORDER BY "RemindTime", "CardID"
+    </select>
+
+    <select id="findNewCardsByDeck" resultMap="CardResultMap">
+        SELECT * FROM card 
+        WHERE "DeckID" = #{deckId}
+        AND "Status" = 0
+        ORDER BY "CardID"
+    </select>
+
+    <select id="findLearningCardsByDeck" resultMap="CardResultMap">
+        SELECT * FROM card 
+        WHERE "DeckID" = #{deckId}
+        AND "Status" = 1
+        ORDER BY "RemindTime", "CardID"
+    </select>
+
+    <select id="findByStatus" resultMap="CardResultMap">
+        SELECT * FROM card 
+        WHERE "Status" = #{status}
+        ORDER BY "DeckID", "CardID"
+    </select>
+
+    <!-- Statistics Queries -->
+    <select id="countCardsByDeck" resultType="int">
+        SELECT COUNT(*) FROM card WHERE "DeckID" = #{deckId}
+    </select>
+
+    <select id="countNewCardsByDeck" resultType="int">
+        SELECT COUNT(*) FROM card 
+        WHERE "DeckID" = #{deckId} AND "Status" = 0
+    </select>
+
+    <select id="countLearningCardsByDeck" resultType="int">
+        SELECT COUNT(*) FROM card 
+        WHERE "DeckID" = #{deckId} AND "Status" = 1
+    </select>
+
+    <select id="countDueCardsByDeck" resultType="int">
+        SELECT COUNT(*) FROM card 
+        WHERE "DeckID" = #{deckId} AND "Status" = 2
+    </select>
+
+    <select id="countDueCardsByDeckAndDate" resultType="int">
+        SELECT COUNT(*) FROM card 
+        WHERE "DeckID" = #{deckId} 
+        AND "Status" IN (1, 2)
+        AND "RemindTime" &lt;= #{date}
+    </select>
+
+    <!-- Batch Operations -->
+    <insert id="batchInsert">
+        INSERT INTO card ("DeckID", "FontContent", "BackContent", "RemindTime", "Status")
+        VALUES
+        <foreach collection="cards" item="card" separator=",">
+            (#{card.deckID}, #{card.frontContent}, #{card.backContent}, 
+             COALESCE(#{card.remindTime}, CURRENT_DATE), 
+             COALESCE(#{card.status}, 0))
+        </foreach>
+    </insert>
+
+    <update id="batchUpdateStatus">
+        UPDATE card SET "Status" = #{status}
+        WHERE "CardID" IN
+        <foreach collection="cardIds" item="cardId" open="(" separator="," close=")">
+            #{cardId}
+        </foreach>
+    </update>
+
+    <!-- Advanced Queries -->
+    <select id="findCardsForReview" resultMap="CardResultMap">
+        SELECT * FROM card 
+        WHERE "DeckID" = #{deckId}
+        AND ("Status" = 0 OR ("Status" IN (1, 2) AND "RemindTime" &lt;= CURRENT_DATE))
+        ORDER BY 
+            CASE WHEN "Status" = 2 AND "RemindTime" &lt; CURRENT_DATE THEN 1 ELSE 2 END,
+            "RemindTime",
+            "CardID"
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <select id="searchCardsByContent" resultMap="CardResultMap">
+        SELECT * FROM card 
+        WHERE "DeckID" = #{deckId}
+        AND (
+            LOWER("FontContent") LIKE LOWER(CONCAT('%', #{searchTerm}, '%'))
+            OR LOWER("BackContent") LIKE LOWER(CONCAT('%', #{searchTerm}, '%'))
+        )
+        ORDER BY "CardID"
+    </select>
+
+</mapper>

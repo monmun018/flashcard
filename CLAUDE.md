@@ -183,9 +183,11 @@ docker-compose up --build -d
 - **Structure**: Tests co-located with features
 
 ### Important Development Notes
-- **Database Schema**: Managed by Flyway migrations (development uses create-drop for rapid iteration)
+- **Database Schema**: Managed by Flyway migrations in `backend/src/main/resources/db/migration/` (development uses create-drop for rapid iteration)
 - **API Documentation**: Available at http://localhost:8080/swagger-ui.html when backend is running
 - **Hot Reload**: Both frontend (Vite HMR) and backend (Spring DevTools) support hot reloading
 - **CORS**: Backend configured to allow frontend origin (localhost:3000)
 - **Logging**: Backend logs to `backend/logs/flashcard-app.log`
-- **Security**: JWT tokens for API authentication, session-based for web controllers
+- **Security**: JWT tokens for API authentication (pure REST API architecture - legacy web controllers removed)
+- **Build Tools**: Gradle for backend (Java 21 required), Vite for frontend (Node.js 18+)
+- **Authentication Testing**: Use provided test credentials or register via `/api/v1/auth/register`

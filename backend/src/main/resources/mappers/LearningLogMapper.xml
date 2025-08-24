@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.app.flashcard.learning.repository.LearningLogMapper">
+
+    <resultMap id="LearningLogResultMap" type="com.app.flashcard.learning.model.LearningLogPojo">
+        <id property="logID" column="logID"/>
+        <result property="deckID" column="deckID"/>
+        <result property="userID" column="userID"/>
+        <result property="learnTime" column="learnTime"/>
+        <result property="logTime" column="logTime"/>
+    </resultMap>
+
+    <select id="findById" resultMap="LearningLogResultMap">
+        SELECT * FROM learningLog WHERE logID = #{id}
+    </select>
+
+    <select id="findByUserId" resultMap="LearningLogResultMap">
+        SELECT * FROM learningLog WHERE userID = #{userId} ORDER BY logTime DESC
+    </select>
+
+    <select id="findByDeckId" resultMap="LearningLogResultMap">
+        SELECT * FROM learningLog WHERE deckID = #{deckId} ORDER BY logTime DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="logID" keyColumn="logID">
+        INSERT INTO learningLog (deckID, userID, learnTime, logTime)
+        VALUES (#{deckID}, #{userID}, 
+                COALESCE(#{learnTime}, 1), 
+                COALESCE(#{logTime}, CURRENT_DATE))
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM learningLog WHERE logID = #{id}
+    </delete>
+
+    <select id="findByUserAndDate" resultMap="LearningLogResultMap">
+        SELECT * FROM learningLog 
+        WHERE userID = #{userId} AND logTime = #{date}
+        ORDER BY logID DESC
+    </select>
+
+</mapper>

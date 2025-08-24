@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.app.flashcard.deck.repository.DeckMapper">
+
+    <resultMap id="DeckResultMap" type="com.app.flashcard.deck.model.DeckPojo">
+        <id property="deckID" column="DeckID"/>
+        <result property="userID" column="UserID"/>
+        <result property="deckName" column="DeckName"/>
+        <result property="newCardNum" column="NewCardNum"/>
+        <result property="learningCardNum" column="LearningCardNum"/>
+        <result property="dueCardNum" column="DueCardNum"/>
+    </resultMap>
+
+    <select id="findById" resultMap="DeckResultMap">
+        SELECT * FROM deck WHERE "DeckID" = #{id}
+    </select>
+
+    <select id="findByUserId" resultMap="DeckResultMap">
+        SELECT * FROM deck WHERE "UserID" = #{userId} ORDER BY "DeckID"
+    </select>
+
+    <select id="findAll" resultMap="DeckResultMap">
+        SELECT * FROM deck ORDER BY "DeckID"
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="deckID" keyColumn="DeckID">
+        INSERT INTO deck ("UserID", "DeckName", "NewCardNum", "LearningCardNum", "DueCardNum")
+        VALUES (#{userID}, #{deckName}, 
+                COALESCE(#{newCardNum}, 0), 
+                COALESCE(#{learningCardNum}, 0), 
+                COALESCE(#{dueCardNum}, 0))
+    </insert>
+
+    <update id="update">
+        UPDATE deck SET
+            "DeckName" = #{deckName},
+            "NewCardNum" = #{newCardNum},
+            "LearningCardNum" = #{learningCardNum},
+            "DueCardNum" = #{dueCardNum}
+        WHERE "DeckID" = #{deckID}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM deck WHERE "DeckID" = #{id}
+    </delete>
+
+    <update id="updateStatistics">
+        UPDATE deck SET
+            "NewCardNum" = #{newCards},
+            "LearningCardNum" = #{learningCards},
+            "DueCardNum" = #{dueCards}
+        WHERE "DeckID" = #{deckId}
+    </update>
+
+</mapper>
